@@ -1,0 +1,25 @@
+SELECT 
+    d.nome AS departamento,
+    COUNT(DISTINCT e.matr) AS qtd_empregados,
+    ROUND(COALESCE(AVG(
+        CASE WHEN v.tipo = 'V' 
+        THEN v.valor ELSE NULL END
+    ), 0), 2) AS media_salarial,
+    ROUND(COALESCE(MAX(
+        CASE WHEN v.tipo = 'V'
+        THEN v.valor ELSE NULL END
+    ), 0), 2) AS maior_salario,
+    ROUND(COALESCE(MIN(
+        CASE WHEN v.tipo = 'V' 
+        THEN v.valor ELSE NULL END
+    ), 0), 2) AS menor_salario,
+    ROUND(COALESCE(SUM(
+        CASE WHEN v.tipo = 'V' THEN v.valor ELSE 0 END
+    ), 0), 2) AS folha_pagamento_total
+FROM departamento d
+LEFT JOIN divisao dv ON dv.cod_dep = d.cod_dep
+LEFT JOIN empregado e ON e.lotacao_div = dv.cod_divisao OR e.lotacao = d.cod_dep
+LEFT JOIN emp_venc ev ON ev.matr = e.matr
+LEFT JOIN vencimento v ON v.cod_venc = ev.cod_venc
+GROUP BY d.nome
+ORDER BY media_salarial DESC;
