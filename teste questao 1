@@ -1,0 +1,51 @@
+letra a)
+SELECT 
+    s.name AS escola,
+    st.enrolled_at::date AS dt_mat,
+    COUNT(DISTINCT st.id) AS qtd_alunos,
+    SUM(c.price) AS total_pago
+FROM 
+    students st
+JOIN courses c ON st.course_id = c.id
+JOIN schools s ON c.school_id = s.id
+WHERE LOWER(c.name) LIKE 'data%'
+GROUP BY 
+    s.name, st.enrolled_at::date
+ORDER BY 
+    st.enrolled_at DESC;
+
+letra b)
+WITH dados AS (
+    SELECT 
+        s.name AS escola,
+        st.enrolled_at::date AS dt_mat,
+        COUNT(DISTINCT st.id) AS qtd_alunos
+    FROM students st
+    JOIN courses c ON st.course_id = c.id
+    JOIN schools s ON c.school_id = s.id
+    WHERE LOWER(c.name) LIKE 'data%'
+    GROUP BY s.name, st.enrolled_at::date
+)
+SELECT 
+    escola,
+    dt_mat,
+    qtd_alunos,
+    SUM(qtd_alunos) OVER (
+        PARTITION BY escola 
+        ORDER BY dt_mat
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS soma_acumulada,
+    ROUND(AVG(qtd_alunos) OVER (
+        PARTITION BY escola 
+        ORDER BY dt_mat
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ), 2) AS media_7,
+    ROUND(AVG(qtd_alunos) OVER (
+        PARTITION BY escola 
+        ORDER BY dt_mat
+        ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+    ), 2) AS media_30
+FROM 
+    dados
+ORDER BY 
+    escola, dt_mat DESC;
